@@ -1,5 +1,7 @@
 package me.fridtjof.websitebuilder;
 
+import me.fridtjof.puddingapi.general.io.Config;
+import me.fridtjof.puddingapi.general.io.FileAPI;
 import me.fridtjof.puddingapi.general.io.Logger;
 import org.apache.commons.text.StringSubstitutor;
 
@@ -9,19 +11,73 @@ import java.util.Map;
 
 public class FileManager {
 
-    String baseDir;
-    Logger logger;
+    WebsiteBuilder wB;
+    String inputDir, outputDir;
+    public Logger logger;
 
     Map<String, String> parts = new HashMap<>();
 
-    public FileManager(String baseDirectory, Logger logger) {
-        this.baseDir = baseDirectory;
-        this.logger = logger;
+    public FileManager(WebsiteBuilder wB, String baseDirectory) {
+        this.wB = wB;
+        this.logger = wB.getLogger();
+        this.inputDir = wB.inputDir;
+        this.outputDir = wB.outputDir;
     }
 
+
+    //preparation
+
+    void setPaths() {
+
+        inputDir = wB.config.getString("input-directory");
+        if(!wB.config.getBoolean("external-input")) {
+            inputDir = wB.path + inputDir;
+        }
+
+        outputDir = wB.config.getString("output-directory");
+        if(!wB.config.getBoolean("external-output")) {
+            outputDir = wB.path + outputDir;
+        }
+    }
+    void createDirectories() {
+        FileAPI fileAPI = new FileAPI(logger);
+        fileAPI.createDirectories(inputDir);
+        fileAPI.createDirectories(outputDir);
+
+    }
+
+    void createFiles() {
+        try {
+            createFile(new File(inputDir + "/pages.txt"));
+            createFile(new File(inputDir + "/parts.txt"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void createFile(File file) throws IOException {
+        if (file.createNewFile()) {
+            logger.info("Creating " + file.getPath());
+            return;
+        }
+        logger.info(file.getPath() + " already exists");
+    }
+
+    void createConfig() {
+        wB.config = new Config(wB.path + "/", "config");
+        wB.config.setDefault("external-input", false);
+        wB.config.setDefault("external-output", false);
+        wB.config.setDefault("input-directory", "/input");
+        wB.config.setDefault("output-directory", "/output");
+    }
+
+    //logic
     public void loopRegisterParts() {
 
-        String path = baseDir  + "/input/parts.txt";
+        int partCount = 0;
+
+        String path = inputDir + "/parts.txt";
 
         logger.info("Starting part registration...");
 
@@ -32,7 +88,9 @@ public class FileManager {
             String line = reader.readLine();
 
             while(line != null) {
-                logger.info("Working on page " + baseDir + "/input/" + line);
+                partCount++;
+
+                logger.info("Working on page " + inputDir + "/parts/" + line);
 
                 parts.put(line, fileToString(line, true));
 
@@ -41,7 +99,8 @@ public class FileManager {
 
             reader.close();
 
-            logger.info("Done!");
+            logger.info(partCount + " part(s) done!");
+            logger.info("-----------");
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -50,7 +109,9 @@ public class FileManager {
 
     public void loopRegisterPages() {
 
-        String path = baseDir  + "/input/pages.txt";
+        int pageCount = 0;
+
+        String path = inputDir + "/pages.txt";
 
         logger.info("Starting page registration...");
 
@@ -61,7 +122,9 @@ public class FileManager {
             String line = reader.readLine();
 
             while(line != null) {
-                logger.info("Working on page " + baseDir + "/input/" + line);
+                pageCount++;
+
+                logger.info("Working on page " + outputDir + "/" + line);
 
                 String content = fileToString(line);
                 content = formatString(content);
@@ -72,7 +135,7 @@ public class FileManager {
 
             reader.close();
 
-            logger.info("Done!");
+            logger.info(pageCount + " page(s) done!");
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -89,7 +152,7 @@ public class FileManager {
             path = "parts/" + path;
         }
 
-        path = baseDir  + "/input/" + path;
+        path = inputDir + "/" + path;
 
         logger.info("Trying to read " + path);
 
@@ -118,7 +181,7 @@ public class FileManager {
 
     public void stringToFile(String path, String content) {
 
-        path = baseDir  + "/output/" + path;
+        path = outputDir + "/" + path;
 
         logger.info("Trying to print " + path);
 

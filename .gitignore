@@ -6,3 +6,8 @@
 *.class
 *.properties
 *.class
+target/classes/me/fridtjof/websitebuilder/FileManager.class
+target/WebsiteBuilder-1.0.0-SNAPSHOT-22-1015-1244-jar-with-dependencies.jar
+target/WebsiteBuilder-1.0.0-SNAPSHOT-22-1015-1244.jar
+target/classes/me/fridtjof/websitebuilder/FileManager.class
+config.pddg

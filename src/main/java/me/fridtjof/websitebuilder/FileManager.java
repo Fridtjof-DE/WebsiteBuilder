@@ -128,7 +128,7 @@ public class FileManager {
 
                 String content = fileToString(line);
                 content = formatString(content);
-                stringToFile("husqvarna.html", content);
+                stringToFile(line, content);
 
                 line = reader.readLine();
             }
